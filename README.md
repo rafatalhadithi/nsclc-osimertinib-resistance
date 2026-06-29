@@ -12,7 +12,7 @@ Due to GitHub file size limits, raw `.fastq`, `.mtx`, and large `.h5ad` files ar
 
 **For Peer Reviewers (Pre-Processed Data):**
 To facilitate reproducibility without requiring extensive computational preprocessing, the fully processed and annotated 5.5 GB single-cell AnnData object used in Script 06 is securely hosted on Zenodo.
-1. Download `GSE131907_FINAL_ANNOTATED.h5ad` from: **https://anonymous.4open.science/r/nsclc-osimertinib-resistance-1B57/**
+1. Download `GSE131907_FINAL_ANNOTATED.h5ad` from: **https://zenodo.org/records/20999292?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjQ4YTYxZTk0LTRhM2ItNDMzYy05YmYxLTcwN2U4ZmQyNzVlNSIsImRhdGEiOnt9LCJyYW5kb20iOiI3MzE0YzMzODA5NWM0YWQwYzhlN2E5MzBlNzA4YzZlYSJ9.HXEcagG6g_NSzw63xfsbH9p1sySeYZIuN1fzGtqWc127Vxzf5jkfQqIu2EpXWW4l4TKQo5siwsppwOKP_-mwjA**
 2. Place the downloaded file into the `data/` directory of this repository before running the scripts.
 
 **Raw Data Sources:**
