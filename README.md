@@ -108,5 +108,19 @@ It is recommended to run this pipeline in an isolated Conda or Virtual Environme
 conda create -n osi-resistance python=3.9
 conda activate osi-resistance
 
+
+## 🛠️ Key Dependencies
+
+To ensure full reproducibility of the computational pipeline, the following package versions (or higher) are required. We strongly recommend running this pipeline within a dedicated virtual environment or Conda environment.
+
+*   **scanpy** >= 1.9.0
+*   **pandas** >= 1.4.0
+*   **numpy** >= 1.21.0
+*   **scikit-learn** >= 1.0.0
+*   **decoupler** >= 1.4.0
+*   **squidpy** >= 1.2.0
+*   **gseapy** >= 1.0.0
+*   **networkx** >= 2.8.0
+*   **lifelines** >= 0.27.0
 # Install required packages
 pip install -r requirements.txt
