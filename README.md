@@ -109,7 +109,7 @@ conda create -n osi-resistance python=3.9
 conda activate osi-resistance
 
 
-## 🛠️ Key Dependencies
+#  Key Dependencies
 
 To ensure full reproducibility of the computational pipeline, the following package versions (or higher) are required. We strongly recommend running this pipeline within a dedicated virtual environment or Conda environment.
 
@@ -122,5 +122,4 @@ To ensure full reproducibility of the computational pipeline, the following pack
 *   **gseapy** >= 1.0.0
 *   **networkx** >= 2.8.0
 *   **lifelines** >= 0.27.0
-# Install required packages
-pip install -r requirements.txt
+
