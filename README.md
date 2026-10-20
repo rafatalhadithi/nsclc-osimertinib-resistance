@@ -12,7 +12,7 @@ Due to GitHub file size limits, raw `.fastq`, `.mtx`, and massive `.h5ad` single
 
 **For Peer Reviewers (Pre-Processed Data):**
 To facilitate immediate reproducibility without requiring extensive computational preprocessing, the fully processed and annotated single-cell AnnData objects used in this study are securely hosted on Zenodo.
-1. Download `GSE131907_FINAL_ANNOTATED.h5ad` (Discovery) and `maynard_annotated.h5ad` (Validation) from Zenodo: **[https://doi.org/10.5281/zenodo.20999292](https://doi.org/10.5281/zenodo.20999292)**
+1. Download `GSE131907_FINAL_ANNOTATED.h5ad` (Discovery) and `maynard_annotated.h5ad` (Validation) from Zenodo: **[[https://doi.org/10.5281/zenodo.20999292](https://zenodo.org/records/23512899?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjExYzFlMTBmLTdmYmQtNGVhNS1iYmNmLTIzODkzYTBhNzJiMCIsImRhdGEiOnt9LCJyYW5kb20iOiIyYjFlZGVmMzhmM2U0NTc3Zjc2MjcwZmFiNmZhMjNmYiJ9.swjgBGwqWAyDnL36unSsdy-QABep7NpuI5vfd9EXKQFYFfd85yO8PhYS5ApYlXvnYG4aS6M1-jUZCCu5Soljhw)](https://doi.org/10.5281/zenodo.20999292)**
 2.  Place the downloaded `.h5ad` files into the `data/` directory of this cloned repository before running the scripts.
 
 **Raw Data Sources:**
