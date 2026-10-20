@@ -1,83 +1,66 @@
 import os
+import sys
 import scanpy as sc
 import pandas as pd
+import numpy as np
+import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 import warnings
 warnings.filterwarnings('ignore')
 
-# 1. PATH CONFIGURATIONS
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
-DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../data'))
-FIG_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '../figures/Fig 3'))
-os.makedirs(DATA_DIR, exist_ok=True)
+DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'data'))
+FIG_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, '..', 'figures', 'Fig 3'))
 os.makedirs(FIG_DIR, exist_ok=True)
 
-# High-impact aesthetics
-sc.set_figure_params(dpi=150, dpi_save=600, format='pdf', transparent=True)
-
 def main():
-    print("--- PIPELINE SCRIPT 05: PAGA TRAJECTORY (FIGURE 3) ---")
+    print("--- PIPELINE SCRIPT 05: PAGA TRAJECTORY (COMPACT HIGH-RES NETWORK) ---")
+    adata = sc.read_h5ad(os.path.join(DATA_DIR, 'GSE131907_FINAL_ANNOTATED.h5ad'))
     
-    # 1. Load Discovery Cohort
-    file_path = os.path.join(DATA_DIR, 'GSE131907_FINAL_ANNOTATED.h5ad')
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Missing discovery dataset: {file_path}")
-        
-    print("1. Loading Annotated Data...")
-    adata = sc.read_h5ad(file_path)
+    cell_col = next((c for c in adata.obs.columns if 'cell' in c.lower()), 'cell_type')
+    origin_col = next((c for c in adata.obs.columns if 'origin' in c.lower() or 'site' in c.lower()), 'Sample_Origin')
     
-    # Isolate Epithelial/Tumor cells for trajectory
-    tumor_mask = adata.obs['cell_type'].astype(str).str.contains('Epithelial|Tumor|Cancer', case=False, na=False)
-    adata_tumor = adata[tumor_mask].copy()
+    adata_tumor = adata[adata.obs[cell_col].astype(str).str.contains('Epithelial|Tumor|Cancer', case=False, na=False)].copy()
     
-    # Ensure neighborhood graph exists
-    if 'neighbors' not in adata_tumor.uns:
-        print("Computing neighborhood graph...")
-        sc.pp.neighbors(adata_tumor, n_neighbors=15, n_pcs=40, random_state=42)
-        
-    # 2. Run PAGA
-    print("2. Computing PAGA topology (Root-free evolutionary lineage)...")
+    origin_mapping = {'nLung': 'Normal Lung', 'tLung': 'Primary Tumor (Lung)', 'tL/B': 'Primary Tumor (Bronchus)', 'PE': 'Metastatic Fluid', 'mLN': 'Metastatic Lymph Node', 'mBrain': 'Brain Metastasis'}
+    adata_tumor = adata_tumor[adata_tumor.obs[origin_col].isin(origin_mapping.keys())].copy()
+    adata_tumor.obs['PAGA_Group'] = adata_tumor.obs[origin_col].map(origin_mapping).astype('category')
     
-    # Define grouping column (ensure it matches the dataset annotations)
-    group_col = 'Resistance_Status' if 'Resistance_Status' in adata_tumor.obs.columns else 'Sample_Origin'
+    color_dict = {'Normal Lung':'#ff9933', 'Primary Tumor (Lung)':'#ffff00', 'Primary Tumor (Bronchus)':'#ffff00', 'Metastatic Fluid':'#800080', 'Metastatic Lymph Node':'#d62728', 'Brain Metastasis':'#000080'}
     
-    # Ensure categories exist
-    if adata_tumor.obs[group_col].dtype.name != 'category':
-        adata_tumor.obs[group_col] = adata_tumor.obs[group_col].astype('category')
-        
-    sc.tl.paga(adata_tumor, groups=group_col)
+    if 'X_pca' not in adata_tumor.obsm: sc.pp.pca(adata_tumor, svd_solver='arpack', random_state=42)
+    sc.pp.neighbors(adata_tumor, n_neighbors=15, n_pcs=30, random_state=42)
+    sc.tl.paga(adata_tumor, groups='PAGA_Group')
     
-    # 3. Export PAGA Connectivity Matrix (Supplementary Data 3)
-    print("3. Exporting PAGA Connectivity Matrix...")
-    connectivities = adata_tumor.uns['paga']['connectivities'].todense()
-    groups = adata_tumor.obs[group_col].cat.categories
+    adj = adata_tumor.uns['paga']['connectivities'].todense()
+    groups = adata_tumor.obs['PAGA_Group'].cat.categories
+    cell_counts = adata_tumor.obs['PAGA_Group'].value_counts()[groups].values
     
-    paga_df = pd.DataFrame(connectivities, index=groups, columns=groups)
-    paga_csv = os.path.join(DATA_DIR, 'Supplementary_Data_3_PAGA_Connectivity.csv')
-    paga_df.to_csv(paga_csv)
-    print(f"   -> Saved: {paga_csv}")
+    G = nx.Graph()
+    for i in range(len(groups)): G.add_node(i)
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups)):
+            if adj[i, j] > 0.05: G.add_edge(i, j, weight=adj[i, j] * 5) 
+                
+    pos = nx.spring_layout(G, weight='weight', k=0.6, seed=42)
     
-    # 4. Plot Figure 3
-    print("4. Generating Figure 3 (PAGA Graph)...")
-    fig3_path = os.path.join(FIG_DIR, 'Figure_3_PAGA_Network.pdf')
-    
-    # Draw PAGA plot
     fig, ax = plt.subplots(figsize=(8, 6))
-    sc.pl.paga(
-        adata_tumor, 
-        color=group_col, 
-        edge_width_scale=1.5, 
-        node_size_scale=2.0, 
-        fontsize=10, 
-        show=False,
-        ax=ax,
-        random_state=42
-    )
+    ax.axis('off') 
     
-    plt.savefig(fig3_path, bbox_inches='tight')
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups)):
+            if adj[i, j] > 0.05: ax.plot([pos[i][0], pos[j][0]], [pos[i][1], pos[j][1]], color='#d3d3d3', linewidth=adj[i, j] * 8, zorder=1)
+                
+    for i, group in enumerate(groups):
+        ax.scatter(pos[i][0], pos[i][1], s=cell_counts[i] * 0.2, c=color_dict[group], edgecolors='black', linewidths=1.5, zorder=2)
+        ax.text(pos[i][0], pos[i][1] + 0.08, group.replace(' (Lung)', '').replace(' (Bronchus)', ''), ha='center', va='bottom', fontsize=11, fontweight='bold', zorder=3)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(FIG_DIR, 'Figure_3C_PAGA_Network.pdf'), dpi=600, transparent=True, bbox_inches='tight')
     plt.close()
-    print(f"   -> Saved: {fig3_path}")
     
+    pd.DataFrame(adj, index=groups, columns=groups).to_csv(os.path.join(DATA_DIR, 'Supplementary_Data_3.csv'))
     print("--- SCRIPT 05 COMPLETE ---")
 
 if __name__ == "__main__":
